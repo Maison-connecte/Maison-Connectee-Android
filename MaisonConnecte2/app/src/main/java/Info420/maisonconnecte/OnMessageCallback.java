@@ -1,7 +1,17 @@
 package Info420.maisonconnecte;
 
 import static androidx.core.content.ContextCompat.getSystemService;
+
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.app.Service;
 import android.content.Context;
+import android.content.Intent;
+import android.os.Build;
+
+import androidx.core.app.NotificationCompat;
 
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
@@ -12,6 +22,7 @@ import java.util.Objects;
 
 public class OnMessageCallback implements MqttCallback {
     Date currentTime;
+    private NotificationManager NM;
 
     OnMessageCallback() {
 
