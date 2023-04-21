@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/itemLedDiv"
+        android:enabled="true"
+        android:title="@string/item_led_div"
+        android:visible="true" />
+    <item
+        android:id="@+id/itemCam"
+        android:enabled="true"
+        android:title="@string/item_cam"
+        android:visible="true" />
+    <item
+        android:id="@+id/itemCon"
+        android:enabled="true"
+        android:title="@string/item_con"
+        android:visible="true" />
+</menu>

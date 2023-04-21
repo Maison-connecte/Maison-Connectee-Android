@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Maison Connectée</string>
+    <string name="item_led_div">DEL divertissement</string>
+    <string name="item_led_sec">DEL sécurité</string>
+    <string name="item_cam">Caméra de sécurité</string>
+    <string name="item_con">Connexion MQTT</string>
+
+    <string name="cRouge">Rouge </string>
+    <string name="cVert">Vert </string>
+    <string name="cBleu">Bleu </string>
+</resources>
