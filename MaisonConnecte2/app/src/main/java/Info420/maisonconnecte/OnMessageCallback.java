@@ -16,15 +16,20 @@ import androidx.core.app.NotificationCompat;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
+
+import java.lang.reflect.Method;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Objects;
 
 public class OnMessageCallback implements MqttCallback {
+    Class c = Class.forName("Info420.maisonconnecte.MainActivity");
+    Object o= c.newInstance();
+    Method method = c.getDeclaredMethod("createNotificationChannel",null);
     Date currentTime;
     private NotificationManager NM;
 
-    OnMessageCallback() {
+    OnMessageCallback() throws ClassNotFoundException, IllegalAccessException, InstantiationException, NoSuchMethodException {
 
     }
 
@@ -37,8 +42,11 @@ public class OnMessageCallback implements MqttCallback {
         System.out.println(topic + ": " + new String(message.getPayload()));
 
         currentTime = Calendar.getInstance().getTime();
-        if (Objects.equals(topic, "capteur_ultrason")) {
+        if (Objects.equals(topic, "capteur_ultrason") && new String(message.getPayload()).equals("1") ) {
             MainActivity.CapteurUltrason(currentTime, Integer.parseInt(new String(message.getPayload())));
+
+            method.invoke(o,null);
+
         }
     }
 

@@ -112,7 +112,7 @@ public class MainActivity extends AppCompatActivity {
         notifDesactivee = false;
     }
 
-    private void createNotificationChannel() {
+    public void createNotificationChannel() {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             CharSequence name = "nom";
@@ -129,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
                     .setContentText("Le détecteur de mouvement a été déclenché") // message for notification
                     .setAutoCancel(true); // clear notification after click
             Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-            PendingIntent pi = PendingIntent.getActivity(getApplicationContext(),0,intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            PendingIntent pi = PendingIntent.getActivity(getApplicationContext(),0,intent,PendingIntent.FLAG_IMMUTABLE);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             mBuilder.setContentIntent(pi);
             notificationManager.notify(1, mBuilder.build());

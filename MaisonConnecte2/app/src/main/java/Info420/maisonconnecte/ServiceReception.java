@@ -92,6 +92,9 @@ public class ServiceReception extends Service {
             System.out.println("cause " + me.getCause());
             System.out.println("excep " + me);
             me.printStackTrace();
+        }catch (IllegalAccessException | ClassNotFoundException | InstantiationException |
+                NoSuchMethodException e) {
+            throw new RuntimeException(e);
         }
     }
 
