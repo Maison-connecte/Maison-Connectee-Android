@@ -107,63 +107,9 @@ public class LedDiv extends AppCompatActivity {
         brightnessSlideBar = findViewById(R.id.brightnessSlide);
         colorPickerView.attachBrightnessSlider(brightnessSlideBar);
         
-        //Barre d'intensité
-        intensite = (TextView) findViewById(R.id.intensiteValeur);
-        intensite.setText("100");
-        seekBarIntensite = (SeekBar) findViewById(R.id.seekBarIntensite);
-        seekBarIntensite.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                intensite.setText("" + (progress+20));
-                if(progress<1)
-                {
-                    progress=1;
-                }
-                String intensite=Integer.toString(progress);
-                try {
-                    MqttClient client = new MqttClient(broker, clientId, persistence);
-
-                    MqttConnectOptions connOpts = new MqttConnectOptions();
-                    connOpts.setCleanSession(true);
-                    System.out.println("Connecting to broker: " + broker);
-                    client.connect(connOpts);
-
-                    System.out.println("Connected");
-                    System.out.println("Publishing message: " + progress);
-
-                    //Ajout du contenu du message
-                    MqttMessage message = new MqttMessage(intensite.getBytes());
-                    message.setQos(qos);
-                    client.publish("intensite", message);
-                    message=new MqttMessage("1".getBytes());
-                    System.out.println("Message published");
-
-                    client.disconnect();
-                    System.out.println("Disconnected");
-                    client.close();
 
 
-                } catch (MqttException e) {
-                    System.out.println("reason " + e.getReasonCode());
-                    System.out.println("msg " + e.getMessage());
-                    System.out.println("loc " + e.getLocalizedMessage());
-                    System.out.println("cause " + e.getCause());
-                    System.out.println("excep " + e);
-                    e.printStackTrace();
-                }
-            }
 
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-
-            }
-        });
     }
     
     private void EnvoiMQTT(int R, int G, int B){
