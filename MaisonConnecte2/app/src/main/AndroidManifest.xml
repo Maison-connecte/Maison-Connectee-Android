@@ -17,10 +17,6 @@
         android:theme="@style/Theme.MaisonConnectée"
         tools:targetApi="31">
         <activity
-            android:name=".ConnexionMQTT"
-            android:exported="false"
-            android:label="Connexion MQTT" />
-        <activity
             android:name=".Cam"
             android:exported="false"
             android:label="Caméra de sécurité" />

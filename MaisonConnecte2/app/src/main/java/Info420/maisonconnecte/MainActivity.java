@@ -99,11 +99,11 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    /*@Override
+    @Override
     protected void onResume() {
         super.onResume();
         notifDesactivee = true;
-    }*/
+    }
 
     
     @Override
@@ -117,7 +117,7 @@ public class MainActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             CharSequence name = "nom";
             String description = "desc";
-            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            int importance = NotificationManager.IMPORTANCE_HIGH;
             NotificationChannel channel = new NotificationChannel("123", name, importance);
             channel.setDescription(description);
             NotificationManager notificationManager = getSystemService(NotificationManager.class);
@@ -126,7 +126,7 @@ public class MainActivity extends AppCompatActivity {
             NotificationCompat.Builder mBuilder =   new NotificationCompat.Builder(getApplicationContext(),"123")
                     .setSmallIcon(R.mipmap.stat_notify_error) // notification icon
                     .setContentTitle("Alerte Mouvement!") // title for notification
-                    .setContentText("Le détecteur de mouvement à été déclenché") // message for notification
+                    .setContentText("Le détecteur de mouvement a été déclenché") // message for notification
                     .setAutoCancel(true); // clear notification after click
             Intent intent = new Intent(getApplicationContext(), MainActivity.class);
             PendingIntent pi = PendingIntent.getActivity(getApplicationContext(),0,intent, PendingIntent.FLAG_UPDATE_CURRENT);
@@ -149,9 +149,6 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case R.id.itemCam:
                 startActivity(new Intent(MainActivity.this, Cam.class));
-                break;
-            case R.id.itemCon:
-                startActivity(new Intent(MainActivity.this, ConnexionMQTT.class));
                 break;
         }
         return true;

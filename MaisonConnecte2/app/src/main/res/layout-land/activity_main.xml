@@ -67,41 +67,27 @@
             android:textAlignment="textEnd" />
     </LinearLayout>
 
-    <LinearLayout
+    <Switch
+        android:id="@+id/switchSecurite"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_weight="0"
-        android:orientation="horizontal">
+        android:minHeight="48dp"
+        android:text="Mode Sécurité" />
 
-        <TextView
-            android:id="@+id/IntensiteLabel"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Intensité : "
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/IntensiteContenu"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="---"
-            android:textAlignment="textEnd" />
-
-    </LinearLayout>
+    <TextView
+        android:id="@+id/infoNotif"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="*Les notifications doivent être activées"
+        android:textSize="8sp"
+        android:textStyle="italic" />
 
     <Button
-        android:id="@+id/btnService"
+        android:id="@+id/button"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:text="Démarrer réception" />
+        android:layout_height="wrap_content"
+        android:layout_weight="0"
+        android:text="Test notification" />
 
-    <Button
-        android:id="@+id/btnArret"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:text="Arrêter réception" />
 </LinearLayout>

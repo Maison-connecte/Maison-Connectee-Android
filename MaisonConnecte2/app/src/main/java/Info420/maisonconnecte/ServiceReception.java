@@ -23,6 +23,7 @@ public class ServiceReception extends Service {
     String clientId = "emqx_test";
     MemoryPersistence persistence = new MemoryPersistence();
 
+    int delaiReception = 5000; //Temps entre chaque réception MQTT en millisecondes
 
     @Override
     public void onCreate() {
@@ -52,7 +53,8 @@ public class ServiceReception extends Service {
         super.onDestroy();
     }
 
-    Runnable mStatusChecker = new Runnable() {
+
+    Runnable repetitionExecution = new Runnable() {
         @Override
         public void run() {
             reception();
@@ -94,11 +96,11 @@ public class ServiceReception extends Service {
     }
 
     void startRepeatingTask() {
-        mStatusChecker.run();
+        repetitionExecution.run();
     }
 
     void stopRepeatingTask() {
-        mHandler.removeCallbacks(mStatusChecker);
+        mHandler.removeCallbacks(repetitionExecution);
     }
 
     //Binding pas utilisé dans le projet

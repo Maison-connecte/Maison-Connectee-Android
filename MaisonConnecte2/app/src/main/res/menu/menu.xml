@@ -5,16 +5,17 @@
     <item
         android:id="@+id/itemLedDiv"
         android:enabled="true"
+        android:icon="@mipmap/android_lightbulb_icon"
+        android:iconTint="@color/white"
         android:title="@string/item_led_div"
-        android:visible="true" />
+        android:visible="true"
+        app:showAsAction="ifRoom|withText" />
     <item
         android:id="@+id/itemCam"
         android:enabled="true"
+        android:icon="@mipmap/video_camera_outline"
+        android:iconTint="@color/white"
         android:title="@string/item_cam"
-        android:visible="true" />
-    <item
-        android:id="@+id/itemCon"
-        android:enabled="true"
-        android:title="@string/item_con"
-        android:visible="true" />
+        android:visible="true"
+        app:showAsAction="ifRoom|withText" />
 </menu>
