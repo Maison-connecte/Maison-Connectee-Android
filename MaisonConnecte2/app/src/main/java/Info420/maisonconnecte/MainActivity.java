@@ -49,12 +49,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        button = (Button) findViewById(R.id.button);
-        button.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View view) {
-                createNotificationChannel();
-            }
-        });
         switchSecurite = (Switch) findViewById(R.id.switchSecurite);
         switchSecurite.setOnCheckedChangeListener((compoundButton, b) -> {
             if (b == true) {
@@ -137,6 +131,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public boolean onCreateOptionsMenu(Menu menu) {
+
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.menu, menu);
         return true;
@@ -158,7 +153,19 @@ public class MainActivity extends AppCompatActivity {
         Calendar calendar = GregorianCalendar.getInstance(); // creates a new calendar instance
         calendar.setTime(timestamp);   // assigns calendar to given date
         TextViewDate.setText(String.format("%d-%d-%d", calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)));
-        TextViewHeure.setText(String.format("%d:%d:%d", calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), calendar.get(Calendar.SECOND)));
+        int heure = calendar.get(Calendar.HOUR_OF_DAY);
+        int minute = calendar.get(Calendar.MINUTE);
+        int seconde = calendar.get(Calendar.SECOND);
+        if (heure < 10) {
+            TextViewHeure.setText(String.format("0%d:", heure));
+        }
+        if (minute < 10) {
+            TextViewHeure.setText(String.format("%d:0%d:", heure, minute));
+        }
+        if (seconde < 10) {
+            TextViewHeure.setText(String.format("%d:%d:0%d", heure, minute, seconde));
+        }
+        TextViewHeure.setText(String.format("%d:%d:%d", heure, minute, seconde));
     }
 
 }

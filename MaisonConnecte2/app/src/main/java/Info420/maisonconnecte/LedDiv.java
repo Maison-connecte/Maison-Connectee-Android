@@ -4,6 +4,8 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.graphics.Color;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.SeekBar;
@@ -44,9 +46,11 @@ public class LedDiv extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_led_div);
-
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         //Interrupteur
         interrupteur = (ToggleButton) findViewById(R.id.interrupteur);
+
+
         interrupteur.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -93,25 +97,33 @@ public class LedDiv extends AppCompatActivity {
                 }
             }
         });
-
-        //Roue des couleurs
         colorPickerView = (ColorPickerView) findViewById(R.id.colorPickerView);
-        colorPickerView.setColorListener(new ColorListener() {
-            @Override
-            public void onColorSelected(int color, boolean fromUser) {
-                EnvoiMQTT(Color.red(color), Color.green(color), Color.blue(color));
-            }
-        });
-
         //Barre de luminosité
         brightnessSlideBar = findViewById(R.id.brightnessSlide);
-        colorPickerView.attachBrightnessSlider(brightnessSlideBar);
-        
 
 
+                //Roue des couleurs
+
+        new Thread(new Runnable() {
+            public void run(){
+                colorPickerView.setColorListener(new ColorListener() {
+                    @Override
+                    public void onColorSelected(int color, boolean fromUser) {
+                        EnvoiMQTT(Color.red(color), Color.green(color), Color.blue(color));
+                    }
+                });
+
+            }
+        }).start();
+        new Thread(new Runnable() {
+
+            public void run() {
+                colorPickerView.attachBrightnessSlider(brightnessSlideBar);
+            }
+        }).start();
 
     }
-    
+
     private void EnvoiMQTT(int R, int G, int B){
         try {
             MqttClient client = new MqttClient(broker, clientId, persistence);
@@ -147,4 +159,13 @@ public class LedDiv extends AppCompatActivity {
             me.printStackTrace();
         }
     }
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                finish();
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+        }
 }

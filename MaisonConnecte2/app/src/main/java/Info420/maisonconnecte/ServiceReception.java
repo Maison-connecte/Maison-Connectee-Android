@@ -46,10 +46,10 @@ public class ServiceReception extends Service {
         return Service.START_STICKY;
     }
 
-    @Override
+   @Override
     public void onDestroy() {
         System.out.println("service arrêté");
-        stopRepeatingTask();
+       // stopRepeatingTask();
         super.onDestroy();
     }
 
