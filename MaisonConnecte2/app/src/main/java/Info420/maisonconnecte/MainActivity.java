@@ -106,6 +106,12 @@ public class MainActivity extends AppCompatActivity {
         notifDesactivee = false;
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+    }
+
     public void createNotificationChannel() {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
