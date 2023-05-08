@@ -1,20 +1,16 @@
 package Info420.maisonconnecte;
 
-import static java.lang.System.currentTimeMillis;
-
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
 
 import android.annotation.SuppressLint;
-import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.content.Context;
-import android.content.DialogInterface;
+import android.app.TimePickerDialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -25,16 +21,14 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.CompoundButton;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.TimePicker;
 import android.widget.Toast;
 
-import java.time.LocalDateTime;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
-import java.time.temporal.ChronoUnit;
 
 public class MainActivity extends AppCompatActivity {
     private Switch switchSecurite;
@@ -44,6 +38,8 @@ public class MainActivity extends AppCompatActivity {
     String[] perms = {"android.permission.POST_NOTIFICATION"};
     int permsRequestCode = 200;
     Button button;
+    private TextView ouvertureLumiereTextView;
+    private TextView fermetureLumiereTextView;
 
 
 
@@ -93,6 +89,70 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+
+        Button boutonChoixOuvertureDialog = findViewById(R.id.boutonChoixOuvertureDialog);
+        Button boutonChoixFermetureDialog = findViewById(R.id.boutonChoixFermetureDialog);
+        ouvertureLumiereTextView = findViewById(R.id.ouvertureLumiereTextView);
+        fermetureLumiereTextView = findViewById(R.id.fermetureLumiereTextView);
+        boutonChoixOuvertureDialog.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                openTimePickerDialog(ouvertureLumiereTextView, "Ouverture");
+            }
+        });
+
+        boutonChoixFermetureDialog.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                openTimePickerDialog(fermetureLumiereTextView,"Fermeture");
+            }
+        });
+
+        loadTimeFromSharedPreferences("Ouverture", ouvertureLumiereTextView, "Ouverture");
+        loadTimeFromSharedPreferences("Fermeture", fermetureLumiereTextView, "Fermeture");
+    }
+
+    //pour remettre les valeurs sauvegarder dans les préférences
+    private void loadTimeFromSharedPreferences(String key, TextView targetTextView, String prefix) {
+        SharedPreferences sharedPreferences = getSharedPreferences("time_preferences", MODE_PRIVATE);
+        int hourOfDay = sharedPreferences.getInt(key + "_hour", -1);
+        int minute = sharedPreferences.getInt(key + "_minute", -1);
+
+        if (hourOfDay != -1 && minute != -1) {
+            String timePeriod = hourOfDay < 12 ? "AM" : "PM";
+            int hourIn12HourFormat = hourOfDay % 12 == 0 ? 12 : hourOfDay % 12;
+            targetTextView.setText(String.format("%s des lumières à : %02d:%02d %s", prefix, hourIn12HourFormat, minute, timePeriod));
+        }
+    }
+
+    //pour sauvegarder les temps ouverture et fermeture dans les préférence.
+    private void saveTimeToSharedPreferences(String key, int hourOfDay, int minute) {
+        SharedPreferences sharedPreferences = getSharedPreferences("time_preferences", MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putInt(key + "_hour", hourOfDay);
+        editor.putInt(key + "_minute", minute);
+        editor.apply();
+    }
+
+
+    //Function pour créer le timer dialog
+    private void openTimePickerDialog(TextView targetTextView,String prefix) {
+        TimePickerDialog timePickerDialog = new TimePickerDialog(
+                this,
+                new TimePickerDialog.OnTimeSetListener() {
+                    @Override
+                    public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
+                        String timePeriod = hourOfDay < 12 ? "AM" : "PM";
+                        int hourIn12HourFormat = hourOfDay % 12 == 0 ? 12 : hourOfDay % 12;
+                        // Set the TextView text
+                        targetTextView.setText(String.format("%s des lumières à : %02d:%02d %s", prefix, hourIn12HourFormat, minute, timePeriod));
+                        // Save the time to SharedPreferences
+                        saveTimeToSharedPreferences(prefix, hourOfDay, minute);
+                    }
+                },
+                12, 0, false); // Set initial time and 12-hour format
+
+        timePickerDialog.show();
     }
 
     @Override
