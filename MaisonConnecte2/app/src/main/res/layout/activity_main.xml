@@ -83,4 +83,37 @@
         android:textSize="8sp"
         android:textStyle="italic" />
 
+    <Button
+        android:id="@+id/openTimePickerDialogButton"
+        android:layout_width="374dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="Choix heure ouverture bande lumineuse"
+        android:textSize="12sp" />
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:layout_marginBottom="20dp"
+        android:layout_weight="0"
+        android:text="Ouverture des lumières à :" />
+
+    <Button
+        android:id="@+id/openTimePickerDialogButton2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="0"
+        android:text="Choix heure fermeture bande lumineuse"
+        android:textSize="12sp" />
+
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:layout_weight="0"
+        android:text="Fermeture des lumières à :" />
+
 </LinearLayout>
