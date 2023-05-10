@@ -24,7 +24,7 @@ public class Cam extends AppCompatActivity implements TextureView.SurfaceTexture
         textureView = findViewById(R.id.texture_view);
         textureView.setSurfaceTextureListener(this);
 
-        socketClient = new SocketClient("172.25.19.29", 8010, this);
+        socketClient = new SocketClient("192.168.0.6", 8010, this);
     }
 
     @Override

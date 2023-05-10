@@ -1,14 +1,18 @@
 package Info420.maisonconnecte;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 
 import android.annotation.SuppressLint;
+import android.app.AlarmManager;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.TimePickerDialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -26,9 +30,23 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
+import org.eclipse.paho.android.service.MqttAndroidClient;
+import org.eclipse.paho.client.mqttv3.IMqttActionListener;
+import org.eclipse.paho.client.mqttv3.IMqttToken;
+import org.eclipse.paho.client.mqttv3.MqttClient;
+import org.eclipse.paho.client.mqttv3.MqttException;
+import org.eclipse.paho.client.mqttv3.MqttMessage;
+
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.concurrent.TimeUnit;
+
+import androidx.work.Data;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
+import androidx.work.Worker;
+import androidx.work.WorkerParameters;
 
 public class MainActivity extends AppCompatActivity {
     private Switch switchSecurite;
@@ -41,6 +59,43 @@ public class MainActivity extends AppCompatActivity {
     private TextView ouvertureLumiereTextView;
     private TextView fermetureLumiereTextView;
 
+    // Add this field to your MainActivity class
+    private MqttAndroidClient mqttClient;
+
+    public class MqttMessageWorker extends Worker {
+        public MqttMessageWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
+            super(context, workerParams);
+        }
+
+        @NonNull
+        @Override
+        public Result doWork() {
+            String msg = getInputData().getString("msg");
+            // Connect to MQTT and send message
+            MqttAndroidClient mqttClient = new MqttAndroidClient(getApplicationContext(), "tcp://test.mosquitto.org:1883", MqttClient.generateClientId());
+            try {
+                mqttClient.connect().setActionCallback(new IMqttActionListener() {
+                    @Override
+                    public void onSuccess(IMqttToken asyncActionToken) {
+                        MqttMessage message = new MqttMessage(msg.getBytes());
+                        try {
+                            mqttClient.publish("capteur_ultrason", message);
+                        } catch (MqttException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
+                        // Handle connection failure here
+                    }
+                });
+            } catch (MqttException e) {
+                throw new RuntimeException(e);
+            }
+            return Result.success();
+        }
+    }
 
 
     @Override
@@ -148,6 +203,26 @@ public class MainActivity extends AppCompatActivity {
                         targetTextView.setText(String.format("%s des lumières à : %02d:%02d %s", prefix, hourIn12HourFormat, minute, timePeriod));
                         // Save the time to SharedPreferences
                         saveTimeToSharedPreferences(prefix, hourOfDay, minute);
+
+                        // Set an alarm for this time
+                        Calendar calendar = Calendar.getInstance();
+                        calendar.set(Calendar.HOUR_OF_DAY, hourOfDay);
+                        calendar.set(Calendar.MINUTE, minute);
+                        calendar.set(Calendar.SECOND, 0);
+
+                        long delay = calendar.getTimeInMillis() - System.currentTimeMillis();
+
+                        Data data = new Data.Builder()
+                                .putString("msg", "Ouverture".equals(prefix) ? "open" : "close")
+                                .build();
+
+                        OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(MqttMessageWorker.class)
+                                .setInitialDelay(delay, TimeUnit.MILLISECONDS)
+                                .setInputData(data)
+                                .build();
+
+                        WorkManager.getInstance(getApplicationContext()).enqueue(workRequest);
+
                     }
                 },
                 12, 0, false); // Set initial time and 12-hour format
@@ -161,7 +236,7 @@ public class MainActivity extends AppCompatActivity {
         notifDesactivee = true;
     }
 
-    
+
     @Override
     protected void onPause() {
         super.onPause();

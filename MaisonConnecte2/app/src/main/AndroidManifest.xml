@@ -41,6 +41,7 @@
         <!-- Mqtt Service -->
         <service android:name="org.eclipse.paho.android.service.MqttService">
         </service>
+        <receiver android:name=".MainActivity$MqttMessageSender" />
     </application>
 
 </manifest>
