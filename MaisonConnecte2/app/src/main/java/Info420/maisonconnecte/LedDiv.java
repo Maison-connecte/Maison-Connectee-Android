@@ -144,6 +144,12 @@ public class LedDiv extends AppCompatActivity {
                     System.out.println("excep " + me);
                     me.printStackTrace();
                 }
+
+                // Save the ToggleButton status to SharedPreferences
+                SharedPreferences sharedPref = getSharedPreferences("LedDivPrefs", Context.MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedPref.edit();
+                editor.putBoolean("toggleStatus", interrupteur.isChecked());
+                editor.apply();
             }
         });
         colorPickerView = (ColorPickerView) findViewById(R.id.colorPickerView);
@@ -173,6 +179,11 @@ public class LedDiv extends AppCompatActivity {
 
         colorPickerView.attachBrightnessSlider(brightnessSlideBar);
         loadSelectedColorAndBrightness();
+
+        // Load the ToggleButton status from SharedPreferences
+        SharedPreferences sharedPref = getSharedPreferences("LedDivPrefs", Context.MODE_PRIVATE);
+        boolean toggleStatus = sharedPref.getBoolean("toggleStatus", false);
+        interrupteur.setChecked(toggleStatus);
     }
 
     @Override

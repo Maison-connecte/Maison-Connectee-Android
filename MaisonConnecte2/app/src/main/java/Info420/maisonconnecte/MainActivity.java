@@ -1,18 +1,11 @@
 package Info420.maisonconnecte;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.app.NotificationCompat;
-
 import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.TimePickerDialog;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -20,6 +13,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -30,23 +24,20 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
+
 import org.eclipse.paho.android.service.MqttAndroidClient;
 import org.eclipse.paho.client.mqttv3.IMqttActionListener;
 import org.eclipse.paho.client.mqttv3.IMqttToken;
-import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
-import java.util.concurrent.TimeUnit;
-
-import androidx.work.Data;
-import androidx.work.OneTimeWorkRequest;
-import androidx.work.WorkManager;
-import androidx.work.Worker;
-import androidx.work.WorkerParameters;
 
 public class MainActivity extends AppCompatActivity {
     private Switch switchSecurite;
@@ -60,41 +51,67 @@ public class MainActivity extends AppCompatActivity {
     private TextView fermetureLumiereTextView;
 
     // Add this field to your MainActivity class
-    private MqttAndroidClient mqttClient;
+    private static MqttAndroidClient mqttClient;
+    private String serverUri = "tcp://test.mosquitto.org:1883"; // the URI of the MQTT broker
+    private String clientId = "AndroidClient"; // a unique identifier for this client
+    private static String topic = "enable"; // the topic to publish to
+    private void initializeMqttClient() {
+        mqttClient = new MqttAndroidClient(this.getApplicationContext(), serverUri, clientId);
 
-    public class MqttMessageWorker extends Worker {
-        public MqttMessageWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
-            super(context, workerParams);
+        try {
+            IMqttToken token = mqttClient.connect();
+            token.setActionCallback(new IMqttActionListener() {
+                @Override
+                public void onSuccess(IMqttToken asyncActionToken) {
+                    // Connected successfully
+                    Log.d("DEBUG", "Connected to MQTT broker");
+                }
+
+                @Override
+                public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
+                    // Failed to connect
+                    Log.d("DEBUG", "Failed to connect to MQTT broker");
+                }
+            });
+        } catch (MqttException e) {
+            e.printStackTrace();
+        }
+    }
+    public static void publishMessage(String message) {
+        byte[] encodedMessage = new byte[0];
+        try {
+            encodedMessage = message.getBytes("UTF-8");
+            MqttMessage mqttMessage = new MqttMessage(encodedMessage);
+            System.out.println("Publishing message: " + mqttMessage);
+            mqttClient.publish(topic, mqttMessage);
+        } catch (UnsupportedEncodingException | MqttException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void setAlarm(String time, String message) {
+        String[] timeParts = time.split(":");
+        int hour = Integer.parseInt(timeParts[0]);
+        int minute = Integer.parseInt(timeParts[1]);
+
+        Intent intent = new Intent(MainActivity.this, AlarmReceiver.class);
+        intent.putExtra("message", message);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(MainActivity.this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+        Calendar calendar = Calendar.getInstance();
+
+        calendar.setTimeInMillis(System.currentTimeMillis());
+        calendar.set(Calendar.HOUR_OF_DAY, hour);
+        calendar.set(Calendar.MINUTE, minute);
+
+        // If the alarm time has passed for today, set it for tomorrow
+        if (calendar.getTimeInMillis() <= System.currentTimeMillis()) {
+            calendar.add(Calendar.DATE, 1);
         }
 
-        @NonNull
-        @Override
-        public Result doWork() {
-            String msg = getInputData().getString("msg");
-            // Connect to MQTT and send message
-            MqttAndroidClient mqttClient = new MqttAndroidClient(getApplicationContext(), "tcp://test.mosquitto.org:1883", MqttClient.generateClientId());
-            try {
-                mqttClient.connect().setActionCallback(new IMqttActionListener() {
-                    @Override
-                    public void onSuccess(IMqttToken asyncActionToken) {
-                        MqttMessage message = new MqttMessage(msg.getBytes());
-                        try {
-                            mqttClient.publish("capteur_ultrason", message);
-                        } catch (MqttException e) {
-                            e.printStackTrace();
-                        }
-                    }
-
-                    @Override
-                    public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
-                        // Handle connection failure here
-                    }
-                });
-            } catch (MqttException e) {
-                throw new RuntimeException(e);
-            }
-            return Result.success();
-        }
+        alarmManager.setExact(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
+        Log.d("DEBUG", "message: " + message);
     }
 
 
@@ -165,6 +182,7 @@ public class MainActivity extends AppCompatActivity {
 
         loadTimeFromSharedPreferences("Ouverture", ouvertureLumiereTextView, "Ouverture");
         loadTimeFromSharedPreferences("Fermeture", fermetureLumiereTextView, "Fermeture");
+        initializeMqttClient();
     }
 
     //pour remettre les valeurs sauvegarder dans les préférences
@@ -177,6 +195,10 @@ public class MainActivity extends AppCompatActivity {
             String timePeriod = hourOfDay < 12 ? "AM" : "PM";
             int hourIn12HourFormat = hourOfDay % 12 == 0 ? 12 : hourOfDay % 12;
             targetTextView.setText(String.format("%s des lumières à : %02d:%02d %s", prefix, hourIn12HourFormat, minute, timePeriod));
+
+            String time = String.format("%02d:%02d", hourOfDay, minute);
+            String message = prefix.equals("Ouverture") ? "1" : "0";
+            setAlarm(time, message);
         }
     }
 
@@ -204,26 +226,20 @@ public class MainActivity extends AppCompatActivity {
                         // Save the time to SharedPreferences
                         saveTimeToSharedPreferences(prefix, hourOfDay, minute);
 
-                        // Set an alarm for this time
-                        Calendar calendar = Calendar.getInstance();
-                        calendar.set(Calendar.HOUR_OF_DAY, hourOfDay);
-                        calendar.set(Calendar.MINUTE, minute);
-                        calendar.set(Calendar.SECOND, 0);
+                        // setting the alarm
+                        String time = String.format("%02d:%02d", hourOfDay, minute);
+                        String message = prefix.equals("Ouverture") ? "1" : "0";
 
-                        long delay = calendar.getTimeInMillis() - System.currentTimeMillis();
+                        // Add debugging logs
+                        Log.d("DEBUG", "prefix: " + prefix);
+                        Log.d("DEBUG", "hourOfDay: " + hourOfDay);
+                        Log.d("DEBUG", "minute: " + minute);
+                        Log.d("DEBUG", "time: " + time);
+                        Log.d("DEBUG", "message: " + message);
 
-                        Data data = new Data.Builder()
-                                .putString("msg", "Ouverture".equals(prefix) ? "open" : "close")
-                                .build();
-
-                        OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(MqttMessageWorker.class)
-                                .setInitialDelay(delay, TimeUnit.MILLISECONDS)
-                                .setInputData(data)
-                                .build();
-
-                        WorkManager.getInstance(getApplicationContext()).enqueue(workRequest);
-
+                        setAlarm(time, message);
                     }
+
                 },
                 12, 0, false); // Set initial time and 12-hour format
 
