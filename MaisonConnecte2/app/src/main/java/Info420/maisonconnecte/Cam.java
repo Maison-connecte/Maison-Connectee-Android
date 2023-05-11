@@ -12,31 +12,35 @@ import android.view.MenuItem;
 import android.view.TextureView;
 import android.view.ViewGroup;
 
-public class Cam extends AppCompatActivity implements TextureView.SurfaceTextureListener, SocketClient.ImageReceivedListener {
-    private TextureView textureView;
-    private SocketClient socketClient;
+// Cette classe gère la caméra dans l'application
+public class Cam extends AppCompatActivity implements TextureView.SurfaceTextureListener, SocketClient.EcouteurImageRecue {
+    private TextureView vueTexture; // Vue de la texture
+    private SocketClient clientSocket; // Client de socket
+
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) { // À la création de l'activité
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_cam);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        textureView = findViewById(R.id.texture_view);
-        textureView.setSurfaceTextureListener(this);
+        // Initialisation de la vue de la texture
+        vueTexture = findViewById(R.id.texture_view);
+        vueTexture.setSurfaceTextureListener(this);
 
-        socketClient = new SocketClient("192.168.0.6", 8010, this);
+        // Initialisation du client de socket
+        clientSocket = new SocketClient("192.168.0.6", 8010, this);
     }
 
     @Override
-    protected void onResume() {
+    protected void onResume() { // À la reprise de l'activité
         super.onResume();
-        socketClient.start();
+        clientSocket.demarrer();
     }
 
     @Override
-    protected void onPause() {
+    protected void onPause() { // À la mise en pause de l'activité
         super.onPause();
-        socketClient.stop();
+        clientSocket.arreter();
     }
 
     @Override
@@ -55,8 +59,9 @@ public class Cam extends AppCompatActivity implements TextureView.SurfaceTexture
     @Override
     public void onSurfaceTextureUpdated(SurfaceTexture surface) {
     }
+
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onOptionsItemSelected(MenuItem item) { // Gestion des actions de menu
         switch (item.getItemId()) {
             case android.R.id.home:
                 finish();
@@ -64,41 +69,45 @@ public class Cam extends AppCompatActivity implements TextureView.SurfaceTexture
                 return super.onOptionsItemSelected(item);
         }
     }
-    private void setAspectRatio(TextureView textureView, int width, int height) {
-        ViewGroup.LayoutParams layoutParams = textureView.getLayoutParams();
-        int viewWidth = textureView.getWidth();
-        int viewHeight = textureView.getHeight();
-        float aspectRatio = (float) width / height;
-        float viewAspectRatio = (float) viewWidth / viewHeight;
 
-        if (aspectRatio > viewAspectRatio) {
-            layoutParams.width = viewWidth;
-            layoutParams.height = (int) (viewWidth / aspectRatio);
+    // Définir le rapport d'aspect de la vue de la texture
+    private void definirRapportAspect(TextureView vueTexture, int width, int height) {
+        ViewGroup.LayoutParams parametresLayout = vueTexture.getLayoutParams();
+        int largeurVue = vueTexture.getWidth();
+        int hauteurVue = vueTexture.getHeight();
+        float rapportAspect = (float) width / height;
+        float rapportAspectVue = (float) largeurVue / hauteurVue;
+
+        if (rapportAspect > rapportAspectVue) {
+            parametresLayout.width = largeurVue;
+            parametresLayout.height = (int) (largeurVue / rapportAspect);
         } else {
-            layoutParams.height = viewHeight;
-            layoutParams.width = (int) (viewHeight * aspectRatio);
+            parametresLayout.height = hauteurVue;
+            parametresLayout.width = (int) (hauteurVue * rapportAspect);
         }
 
-        textureView.setLayoutParams(layoutParams);
+        vueTexture.setLayoutParams(parametresLayout);
     }
+
     @Override
-    public void onImageReceived(byte[] imageBytes) {
+    public void onImageReceived(byte[] octetsImage) { // À la réception d'une image
         runOnUiThread(() -> {
             try {
-                String base64String = new String(imageBytes);
-                byte[] decodedString = Base64.decode(base64String, Base64.DEFAULT);
-                Bitmap bitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+                String chaineBase64 = new String(octetsImage);
+                byte[] chaineDecodee = Base64.decode(chaineBase64, Base64.DEFAULT);
+                Bitmap bitmap = BitmapFactory.decodeByteArray(chaineDecodee, 0, chaineDecodee.length);
 
-                if (bitmap != null && textureView.isAvailable()) {
-                    int bitmapWidth = bitmap.getWidth();
-                    int bitmapHeight = bitmap.getHeight();
-                    setAspectRatio(textureView, bitmapWidth, bitmapHeight);
+                if (bitmap != null && vueTexture.isAvailable()) {
+                    int largeurBitmap = bitmap.getWidth();
+                    int hauteurBitmap = bitmap.getHeight();
+                    // Définir le rapport d'aspect pour le bitmap
+                    definirRapportAspect(vueTexture, largeurBitmap, hauteurBitmap);
 
-                    textureView.getSurfaceTexture().setDefaultBufferSize(bitmapWidth, bitmapHeight);
-                    Canvas canvas = textureView.lockCanvas();
-                    if (canvas != null) {
-                        canvas.drawBitmap(bitmap, 0, 0, null);
-                        textureView.unlockCanvasAndPost(canvas);
+                    vueTexture.getSurfaceTexture().setDefaultBufferSize(largeurBitmap, hauteurBitmap);
+                    Canvas toile = vueTexture.lockCanvas();
+                    if (toile != null) {
+                        toile.drawBitmap(bitmap, 0, 0, null);
+                        vueTexture.unlockCanvasAndPost(toile);
                     }
                 }
             } catch (Exception e) {

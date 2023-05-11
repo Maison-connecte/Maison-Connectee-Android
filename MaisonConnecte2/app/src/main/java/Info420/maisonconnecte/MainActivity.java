@@ -40,92 +40,88 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 
 public class MainActivity extends AppCompatActivity {
-    private Switch switchSecurite;
-    private static TextView TextViewDate;
-    private static TextView TextViewHeure;
-    private boolean notifDesactivee;
+    private Switch interrupteurSecurite; // switchSecurite
+    private static TextView TextViewDate; // TextViewDate
+    private static TextView TextViewHeure; // TextViewHeure
+    private boolean notifDesactivee; // notifDesactivee
     String[] perms = {"android.permission.POST_NOTIFICATION"};
     int permsRequestCode = 200;
-    Button button;
     private TextView ouvertureLumiereTextView;
     private TextView fermetureLumiereTextView;
-
-    // Add this field to your MainActivity class
-    private static MqttAndroidClient mqttClient;
-    private String serverUri = "tcp://test.mosquitto.org:1883"; // the URI of the MQTT broker
-    private String clientId = "AndroidClient"; // a unique identifier for this client
-    private static String topic = "enable"; // the topic to publish to
-    private void initializeMqttClient() {
-        mqttClient = new MqttAndroidClient(this.getApplicationContext(), serverUri, clientId);
+    private static MqttAndroidClient clientMqtt; // mqttClient
+    private String serverUri = "tcp://test.mosquitto.org:1883"; // L'URI du broker MQTT
+    private String clientId = "ClientAndroid"; // Un identifiant unique pour ce client
+    private static String sujet = "allumer_led_divertissement"; // Le sujet à publier
+    private void initialiserClientMqtt() { // initialisation du client mqtt
+        clientMqtt = new MqttAndroidClient(this.getApplicationContext(), serverUri, clientId);
 
         try {
-            IMqttToken token = mqttClient.connect();
+            IMqttToken token = clientMqtt.connect();
             token.setActionCallback(new IMqttActionListener() {
                 @Override
                 public void onSuccess(IMqttToken asyncActionToken) {
-                    // Connected successfully
-                    Log.d("DEBUG", "Connected to MQTT broker");
+                    // Connecté avec succès
+                    Log.d("DEBUG", "Connecté au broker MQTT");
                 }
 
                 @Override
                 public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
-                    // Failed to connect
-                    Log.d("DEBUG", "Failed to connect to MQTT broker");
+                    // Échec de la connexion
+                    Log.d("DEBUG", "Échec de la connexion au broker MQTT");
                 }
             });
         } catch (MqttException e) {
             e.printStackTrace();
         }
     }
-    public static void publishMessage(String message) {
-        byte[] encodedMessage = new byte[0];
+    public static void publierMessage(String message) {
+        byte[] messageEncode = new byte[0];
         try {
-            encodedMessage = message.getBytes("UTF-8");
-            MqttMessage mqttMessage = new MqttMessage(encodedMessage);
-            System.out.println("Publishing message: " + mqttMessage);
-            mqttClient.publish(topic, mqttMessage);
+            messageEncode = message.getBytes("UTF-8");
+            MqttMessage mqttMessage = new MqttMessage(messageEncode);
+            System.out.println("Publication du message : " + mqttMessage);
+            clientMqtt.publish(sujet, mqttMessage);
         } catch (UnsupportedEncodingException | MqttException e) {
             e.printStackTrace();
         }
     }
 
-    private void setAlarm(String time, String message) {
-        String[] timeParts = time.split(":");
-        int hour = Integer.parseInt(timeParts[0]);
-        int minute = Integer.parseInt(timeParts[1]);
+    private void configurerAlarme(String temps, String message) {
+        String[] partiesTemps = temps.split(":");
+        int heure = Integer.parseInt(partiesTemps[0]);
+        int minute = Integer.parseInt(partiesTemps[1]);
 
-        Intent intent = new Intent(MainActivity.this, AlarmReceiver.class);
-        intent.putExtra("message", message);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(MainActivity.this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        Intent intention = new Intent(MainActivity.this, AlarmReceiver.class);
+        intention.putExtra("message", message);
+        PendingIntent intentionPendante = PendingIntent.getBroadcast(MainActivity.this, 0, intention, PendingIntent.FLAG_UPDATE_CURRENT);
 
-        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-        Calendar calendar = Calendar.getInstance();
+        AlarmManager gestionnaireAlarme = (AlarmManager) getSystemService(ALARM_SERVICE);
+        Calendar calendrier = Calendar.getInstance();
 
-        calendar.setTimeInMillis(System.currentTimeMillis());
-        calendar.set(Calendar.HOUR_OF_DAY, hour);
-        calendar.set(Calendar.MINUTE, minute);
+        calendrier.setTimeInMillis(System.currentTimeMillis());
+        calendrier.set(Calendar.HOUR_OF_DAY, heure);
+        calendrier.set(Calendar.MINUTE, minute);
 
-        // If the alarm time has passed for today, set it for tomorrow
-        if (calendar.getTimeInMillis() <= System.currentTimeMillis()) {
-            calendar.add(Calendar.DATE, 1);
+        // Si l'heure de l'alarme est déjà passée pour aujourd'hui, la régler pour demain
+        if (calendrier.getTimeInMillis() <= System.currentTimeMillis()) {
+            calendrier.add(Calendar.DATE, 1);
         }
 
-        alarmManager.setExact(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
+        gestionnaireAlarme.setExact(AlarmManager.RTC_WAKEUP, calendrier.getTimeInMillis(), intentionPendante);
         Log.d("DEBUG", "message: " + message);
     }
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        switchSecurite = (Switch) findViewById(R.id.switchSecurite);
-        switchSecurite.setOnCheckedChangeListener((compoundButton, b) -> {
+        interrupteurSecurite = (Switch) findViewById(R.id.switchSecurite);
+        interrupteurSecurite.setOnCheckedChangeListener((compoundButton, b) -> {
             if (b == true) {
                 //Vérifie si les notifications sont activées
                 if (ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                     requestPermissions(perms, permsRequestCode);
-                    switchSecurite.setChecked(false);
+                    interrupteurSecurite.setChecked(false);
                     Toast.makeText(this, "Activer les notifications pour le mode Sécurité", Toast.LENGTH_LONG).show();
                 } else {
                     startService(new Intent(getApplicationContext(), ServiceReception.class));
@@ -135,7 +131,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+        Intent intention = new Intent(getApplicationContext(), MainActivity.class);
 
         //Capteur ultrason
         TextViewDate = (TextView) findViewById(R.id.DateContenu);
@@ -155,7 +151,7 @@ public class MainActivity extends AppCompatActivity {
 
                 if(!notifDesactivee)
                 {
-                    createNotificationChannel();
+                    creerCanalNotification();
 
                     notifDesactivee = true;
                 }
@@ -169,81 +165,80 @@ public class MainActivity extends AppCompatActivity {
         boutonChoixOuvertureDialog.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                openTimePickerDialog(ouvertureLumiereTextView, "Ouverture");
+                ouvrirDialogChoixHeure(ouvertureLumiereTextView, "Ouverture");
             }
         });
 
         boutonChoixFermetureDialog.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                openTimePickerDialog(fermetureLumiereTextView,"Fermeture");
+                ouvrirDialogChoixHeure(fermetureLumiereTextView,"Fermeture");
             }
         });
 
-        loadTimeFromSharedPreferences("Ouverture", ouvertureLumiereTextView, "Ouverture");
-        loadTimeFromSharedPreferences("Fermeture", fermetureLumiereTextView, "Fermeture");
-        initializeMqttClient();
+        chargerHeureDepuisPreferences("Ouverture", ouvertureLumiereTextView, "Ouverture");
+        chargerHeureDepuisPreferences("Fermeture", fermetureLumiereTextView, "Fermeture");
+        initialiserClientMqtt();
     }
 
-    //pour remettre les valeurs sauvegarder dans les préférences
-    private void loadTimeFromSharedPreferences(String key, TextView targetTextView, String prefix) {
-        SharedPreferences sharedPreferences = getSharedPreferences("time_preferences", MODE_PRIVATE);
-        int hourOfDay = sharedPreferences.getInt(key + "_hour", -1);
-        int minute = sharedPreferences.getInt(key + "_minute", -1);
+    // pour remettre les valeurs sauvegardées dans les préférences
+    private void chargerHeureDepuisPreferences(String cle, TextView vueTexteCible, String prefixe) {
+        SharedPreferences preferencesPartagees = getSharedPreferences("preferences_heure", MODE_PRIVATE);
+        int heureDuJour = preferencesPartagees.getInt(cle + "_heure", -1);
+        int minute = preferencesPartagees.getInt(cle + "_minute", -1);
 
-        if (hourOfDay != -1 && minute != -1) {
-            String timePeriod = hourOfDay < 12 ? "AM" : "PM";
-            int hourIn12HourFormat = hourOfDay % 12 == 0 ? 12 : hourOfDay % 12;
-            targetTextView.setText(String.format("%s des lumières à : %02d:%02d %s", prefix, hourIn12HourFormat, minute, timePeriod));
+        if (heureDuJour != -1 && minute != -1) {
+            String periodeTemps = heureDuJour < 12 ? "AM" : "PM";
+            int heureEnFormat12Heures = heureDuJour % 12 == 0 ? 12 : heureDuJour % 12;
+            vueTexteCible.setText(String.format("%s des lumières à : %02d:%02d %s", prefixe, heureEnFormat12Heures, minute, periodeTemps));
 
-            String time = String.format("%02d:%02d", hourOfDay, minute);
-            String message = prefix.equals("Ouverture") ? "1" : "0";
-            setAlarm(time, message);
+            String temps = String.format("%02d:%02d", heureDuJour, minute);
+            String message = prefixe.equals("Ouverture") ? "1" : "0";
+            configurerAlarme(temps, message);
         }
     }
 
-    //pour sauvegarder les temps ouverture et fermeture dans les préférence.
-    private void saveTimeToSharedPreferences(String key, int hourOfDay, int minute) {
-        SharedPreferences sharedPreferences = getSharedPreferences("time_preferences", MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putInt(key + "_hour", hourOfDay);
-        editor.putInt(key + "_minute", minute);
-        editor.apply();
+    // pour sauvegarder les temps d'ouverture et de fermeture dans les préférences.
+    private void sauvegarderHeureDansPreferences(String cle, int heureDuJour, int minute) {
+        SharedPreferences preferencesPartagees = getSharedPreferences("preferences_heure", MODE_PRIVATE);
+        SharedPreferences.Editor editeur = preferencesPartagees.edit();
+        editeur.putInt(cle + "_heure", heureDuJour);
+        editeur.putInt(cle + "_minute", minute);
+        editeur.apply();
     }
 
-
-    //Function pour créer le timer dialog
-    private void openTimePickerDialog(TextView targetTextView,String prefix) {
-        TimePickerDialog timePickerDialog = new TimePickerDialog(
+    // Fonction pour créer le dialog de choix d'heure
+    private void ouvrirDialogChoixHeure(TextView vueTexteCible,String prefixe) {
+        TimePickerDialog dialogChoixHeure = new TimePickerDialog(
                 this,
                 new TimePickerDialog.OnTimeSetListener() {
                     @Override
-                    public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
-                        String timePeriod = hourOfDay < 12 ? "AM" : "PM";
-                        int hourIn12HourFormat = hourOfDay % 12 == 0 ? 12 : hourOfDay % 12;
-                        // Set the TextView text
-                        targetTextView.setText(String.format("%s des lumières à : %02d:%02d %s", prefix, hourIn12HourFormat, minute, timePeriod));
-                        // Save the time to SharedPreferences
-                        saveTimeToSharedPreferences(prefix, hourOfDay, minute);
+                    public void onTimeSet(TimePicker view, int heureDuJour, int minute) {
+                        String periodeTemps = heureDuJour < 12 ? "AM" : "PM";
+                        int heureEnFormat12Heures = heureDuJour % 12 == 0 ? 12 : heureDuJour % 12;
+                        // Définir le texte de la vue TextView
+                        vueTexteCible.setText(String.format("%s des lumières à : %02d:%02d %s", prefixe, heureEnFormat12Heures, minute, periodeTemps));
+                        // Sauvegarder l'heure dans les préférences partagées
+                        sauvegarderHeureDansPreferences(prefixe, heureDuJour, minute);
 
-                        // setting the alarm
-                        String time = String.format("%02d:%02d", hourOfDay, minute);
-                        String message = prefix.equals("Ouverture") ? "1" : "0";
+                        // configuration de l'alarme
+                        String temps = String.format("%02d:%02d", heureDuJour, minute);
+                        String message = prefixe.equals("Ouverture") ? "1" : "0";
 
-                        // Add debugging logs
-                        Log.d("DEBUG", "prefix: " + prefix);
-                        Log.d("DEBUG", "hourOfDay: " + hourOfDay);
+                        // Ajout des logs de debug
+                        Log.d("DEBUG", "prefixe: " + prefixe);
+                        Log.d("DEBUG", "heureDuJour: " + heureDuJour);
                         Log.d("DEBUG", "minute: " + minute);
-                        Log.d("DEBUG", "time: " + time);
+                        Log.d("DEBUG", "temps: " + temps);
                         Log.d("DEBUG", "message: " + message);
 
-                        setAlarm(time, message);
+                        configurerAlarme(temps, message);
                     }
 
                 },
-                12, 0, false); // Set initial time and 12-hour format
+                12, 0, false); // Définir l'heure initiale et le format 12 heures
 
-        timePickerDialog.show();
+        dialogChoixHeure.show();
     }
 
     @Override
@@ -251,8 +246,6 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         notifDesactivee = true;
     }
-
-
     @Override
     protected void onPause() {
         super.onPause();
@@ -262,30 +255,30 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
     }
 
-    public void createNotificationChannel() {
+    // Fonction pour créer le canal de notification
+    public void creerCanalNotification() {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            CharSequence name = "nom";
+            CharSequence nom = "nom";
             String description = "desc";
             int importance = NotificationManager.IMPORTANCE_HIGH;
-            NotificationChannel channel = new NotificationChannel("123", name, importance);
-            channel.setDescription(description);
-            NotificationManager notificationManager = getSystemService(NotificationManager.class);
-            notificationManager.createNotificationChannel(channel);
+            NotificationChannel canal = new NotificationChannel("123", nom, importance);
+            canal.setDescription(description);
+            NotificationManager gestionnaireNotification = getSystemService(NotificationManager.class);
+            gestionnaireNotification.createNotificationChannel(canal);
 
             NotificationCompat.Builder mBuilder =   new NotificationCompat.Builder(getApplicationContext(),"123")
-                    .setSmallIcon(R.mipmap.stat_notify_error) // notification icon
-                    .setContentTitle("Alerte Mouvement!") // title for notification
-                    .setContentText("Le détecteur de mouvement a été déclenché") // message for notification
-                    .setAutoCancel(true); // clear notification after click
-            Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-            PendingIntent pi = PendingIntent.getActivity(getApplicationContext(),0,intent,PendingIntent.FLAG_IMMUTABLE);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    .setSmallIcon(R.mipmap.stat_notify_error) // icône de notification
+                    .setContentTitle("Alerte Mouvement!") // titre pour la notification
+                    .setContentText("Le détecteur de mouvement a été déclenché") // message pour la notification
+                    .setAutoCancel(true); // efface la notification après le clic
+            Intent intention = new Intent(getApplicationContext(), MainActivity.class);
+            PendingIntent pi = PendingIntent.getActivity(getApplicationContext(),0,intention,PendingIntent.FLAG_IMMUTABLE);
+            intention.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             mBuilder.setContentIntent(pi);
-            notificationManager.notify(1, mBuilder.build());
+            gestionnaireNotification.notify(1, mBuilder.build());
         }
     }
 
@@ -308,13 +301,14 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
-    public static void CapteurUltrason(Date timestamp, int distance) {
-        Calendar calendar = GregorianCalendar.getInstance(); // creates a new calendar instance
-        calendar.setTime(timestamp);   // assigns calendar to given date
-        TextViewDate.setText(String.format("%d-%d-%d", calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)));
-        int heure = calendar.get(Calendar.HOUR_OF_DAY);
-        int minute = calendar.get(Calendar.MINUTE);
-        int seconde = calendar.get(Calendar.SECOND);
+    // Gère l'évènement lorsqu'un mouvement est détecté par le capteur à ultrasons
+    public static void CapteurUltrason(Date horodatage, int distance) {
+        Calendar calendrier = GregorianCalendar.getInstance(); // crée une nouvelle instance de calendrier
+        calendrier.setTime(horodatage);   // attribue le calendrier à la date donnée
+        TextViewDate.setText(String.format("%d-%d-%d", calendrier.get(Calendar.YEAR), calendrier.get(Calendar.MONTH), calendrier.get(Calendar.DAY_OF_MONTH)));
+        int heure = calendrier.get(Calendar.HOUR_OF_DAY);
+        int minute = calendrier.get(Calendar.MINUTE);
+        int seconde = calendrier.get(Calendar.SECOND);
         if (heure < 10) {
             TextViewHeure.setText(String.format("0%d:", heure));
         }

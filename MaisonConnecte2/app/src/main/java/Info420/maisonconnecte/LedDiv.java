@@ -6,8 +6,6 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.SeekBar;
-import android.widget.TextView;
 import android.widget.ToggleButton;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -25,73 +23,74 @@ import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-
+// Classe principale pour contrôler les lumières LED
 public class LedDiv extends AppCompatActivity {
-    //Variable interrupteur
+
+    // Variable pour l'interrupteur
     private ToggleButton interrupteur;
 
-    //Variables MQTT
-    String pubTopic = "colordylan";
-    String content;
+    // Variables pour MQTT
+    String sujetPublication = "couleur_led_divertissement";
+
+    String getSujetPublicationFermeLumiere = "allumer_led_divertissement";
+    String contenu;
     int qos = 2;
     String broker = "tcp://test.mosquitto.org:1883";
-    String clientId = "emqx_test";
+    String identifiantClient = "emqx_test";
     MemoryPersistence persistence = new MemoryPersistence();
 
-    //création d'un thread pool pour les envois MQTT
-    private final ExecutorService executorService = Executors.newSingleThreadExecutor();
-    private int previousColorSum = 0;
-    private final int ColorSumDifference = 20;
+    // Création d'un pool de threads pour les envois MQTT
+    private final ExecutorService serviceExecutor = Executors.newSingleThreadExecutor();
+    private int sommeCouleurPrecedente = 0;
+    private final int differenceSommeCouleur = 20;
 
+    // Variables pour la couleur
+    ColorPickerView selecteurCouleur;
+    BrightnessSlideBar barreLuminosite;
 
-    //Variables couleur
-    ColorPickerView colorPickerView;
-    BrightnessSlideBar brightnessSlideBar;
-    private SeekBar seekBarIntensite;
-    private TextView intensite;
-
-    //connection MQTT
+    // Connexion MQTT
     private MqttClient client;
-    private MqttConnectOptions connOpts;
+    private MqttConnectOptions optionsConnexion;
 
-    //sauvegarde en cache la couleur pour que quand l'activité est détruite et recréer la couleur est préservé.
-    private void saveSelectedColorAndBrightness(int color) {
-        SharedPreferences sharedPref = getSharedPreferences("LedDivPrefs", Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPref.edit();
-        editor.putInt("selectedColor", color);
-        editor.apply();
+    // Sauvegarde en cache la couleur pour que quand l'activité est détruite et recréer la couleur est préservé.
+    private void sauvegarderCouleurEtLuminositeSelectionnees(int color) {
+        SharedPreferences preferencesPartagees = getSharedPreferences("LedDivPrefs", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editeur = preferencesPartagees.edit();
+        editeur.putInt("couleurSelectionnee", color);
+        editeur.apply();
     }
 
-    //utilise les préférences et met le color picker à la bonne couleur
-    private void loadSelectedColorAndBrightness() {
-        SharedPreferences sharedPref = getSharedPreferences("LedDivPrefs", Context.MODE_PRIVATE);
-        int color = sharedPref.getInt("selectedColor", Color.BLACK);
-        int brightness = sharedPref.getInt("selectedBrightness", 128);
-        colorPickerView.setInitialColor(color);
+    // Utilise les préférences et met le sélecteur de couleur à la bonne couleur
+    private void chargerCouleurEtLuminositeSelectionnees() {
+        SharedPreferences preferencesPartagees = getSharedPreferences("LedDivPrefs", Context.MODE_PRIVATE);
+        int couleur = preferencesPartagees.getInt("couleurSelectionnee", Color.BLACK);
+        int luminosite = preferencesPartagees.getInt("luminositeSelectionnee", 128);
+        selecteurCouleur.setInitialColor(couleur);
     }
 
+    // Méthode appelée lors de la création de l'activité
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_led_div);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        //Interrupteur
+        // Interrupteur
         interrupteur = (ToggleButton) findViewById(R.id.interrupteur);
 
-        //établissement d'une connection au serveur MQTT
+        // Établissement d'une connexion au serveur MQTT
         try {
-            client = new MqttClient(broker, clientId, persistence);
+            client = new MqttClient(broker, identifiantClient, persistence);
 
-            connOpts = new MqttConnectOptions();
-            connOpts.setCleanSession(true);
-            connOpts.setAutomaticReconnect(true);
+            optionsConnexion = new MqttConnectOptions();
+            optionsConnexion.setCleanSession(true);
+            optionsConnexion.setAutomaticReconnect(true);
 
-            System.out.println("Connecting to broker: " + broker);
-            client.connect(connOpts);
-            System.out.println("Connected");
+            System.out.println("Connexion au broker: " + broker);
+            client.connect(optionsConnexion);
+            System.out.println("Connecté");
 
         } catch (MqttException me) {
-            System.out.println("reason " + me.getReasonCode());
+            System.out.println("raison " + me.getReasonCode());
             System.out.println("msg " + me.getMessage());
             System.out.println("loc " + me.getLocalizedMessage());
             System.out.println("cause " + me.getCause());
@@ -99,45 +98,46 @@ public class LedDiv extends AppCompatActivity {
             me.printStackTrace();
         }
 
-
         interrupteur.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 String contenu;
 
                 try {
-                    MqttClient client = new MqttClient(broker, clientId, persistence);
+                    MqttClient client = new MqttClient(broker, identifiantClient, persistence);
+                    MqttConnectOptions optionsConnexion = new MqttConnectOptions();
+                    optionsConnexion.setCleanSession(true);
 
-                    MqttConnectOptions connOpts = new MqttConnectOptions();
-                    //connOpts.setUserName("rw");
-                    //connOpts.setPassword("readwrite".toCharArray());
-                    connOpts.setCleanSession(true);
                     if(interrupteur.isChecked()){
-                        contenu="1";
+                        contenu = "1";
+                        // prend la couleur sélectionnée dans la roue des couleurs
+                        int color = selecteurCouleur.getColor();
+                        final int rouge = Color.red(color);
+                        final int vert = Color.green(color);
+                        final int bleu = Color.blue(color);
+                        // envois la couleur
+                        envoiMQTT(rouge, vert, bleu);
+                    } else {
+                        contenu = "0";
+                        envoiMQTT(0);
                     }
-                    else{
-                        contenu="0";
-                    }
 
-                    //Établir connexion
-                    System.out.println("Connecting to broker: " + broker);
-                    client.connect(connOpts);
+                    System.out.println("Connexion au broker: " + broker);
+                    client.connect(optionsConnexion);
+                    System.out.println("Connecté");
+                    System.out.println("Publication du message: " + contenu);
 
-                    System.out.println("Connected");
-                    System.out.println("Publishing message: " + contenu);
-
-                    //Ajout du contenu du message
                     MqttMessage message = new MqttMessage(contenu.getBytes());
                     message.setQos(qos);
                     client.publish("enable", message);
-                    System.out.println("Message published");
+                    System.out.println("Message publié");
 
                     client.disconnect();
-                    System.out.println("Disconnected");
+                    System.out.println("Déconnecté");
                     client.close();
-                }
-                catch(MqttException me) {
-                    System.out.println("reason " + me.getReasonCode());
+
+                } catch(MqttException me) {
+                    System.out.println("raison " + me.getReasonCode());
                     System.out.println("msg " + me.getMessage());
                     System.out.println("loc " + me.getLocalizedMessage());
                     System.out.println("cause " + me.getCause());
@@ -145,52 +145,69 @@ public class LedDiv extends AppCompatActivity {
                     me.printStackTrace();
                 }
 
-                // Save the ToggleButton status to SharedPreferences
-                SharedPreferences sharedPref = getSharedPreferences("LedDivPrefs", Context.MODE_PRIVATE);
-                SharedPreferences.Editor editor = sharedPref.edit();
-                editor.putBoolean("toggleStatus", interrupteur.isChecked());
-                editor.apply();
+                // Sauvegarde de l'état du bouton à bascule dans les SharedPreferences
+                SharedPreferences preferencesPartagees = getSharedPreferences("preferences_application", Context.MODE_PRIVATE);
+                SharedPreferences.Editor editeur = preferencesPartagees.edit();
+                editeur.putBoolean("etatBascule", interrupteur.isChecked());
+                editeur.apply();
             }
         });
-        colorPickerView = (ColorPickerView) findViewById(R.id.colorPickerView);
-        //Barre de luminosité
-        brightnessSlideBar = findViewById(R.id.brightnessSlide);
+        selecteurCouleur = (ColorPickerView) findViewById(R.id.colorPickerView);
+        // Barre de luminosité
+        barreLuminosite = findViewById(R.id.brightnessSlide);
 
-        //Roue des couleurs
-        colorPickerView.setColorListener(new ColorListener() {
+        // Roue des couleurs
+        selecteurCouleur.setColorListener(new ColorListener() {
             @Override
             public void onColorSelected(int color, boolean fromUser) {
-                final int red = Color.red(color);
-                final int green = Color.green(color);
-                final int blue = Color.blue(color);
-                final int currentColorSum = red + green + blue;
+                final int rouge = Color.red(color);
+                final int vert = Color.green(color);
+                final int bleu = Color.blue(color);
+                final int sommeCouleurActuelle = rouge + vert + bleu;
 
-                if (Math.abs(currentColorSum - previousColorSum) >= ColorSumDifference) {
-                    executorService.submit(new Runnable() {
-                        @Override
-                        public void run() {
-                            EnvoiMQTT(red, green, blue);
-                        }
-                    });
-                    previousColorSum = currentColorSum;
+                if (Math.abs(sommeCouleurActuelle - sommeCouleurPrecedente) >= differenceSommeCouleur) {
+                    if (interrupteur.isChecked()) { // regarde si la bande lumineuse est allumée
+                        serviceExecutor.submit(new Runnable() {
+                            @Override
+                            public void run() {
+                                envoiMQTT(rouge, vert, bleu);
+                            }
+                        });
+                    }
+                    sommeCouleurPrecedente = sommeCouleurActuelle;
                 }
             }
         });
 
-        colorPickerView.attachBrightnessSlider(brightnessSlideBar);
-        loadSelectedColorAndBrightness();
+        selecteurCouleur.attachBrightnessSlider(barreLuminosite);
+        chargerCouleurEtLuminositeSelectionnees();
 
-        // Load the ToggleButton status from SharedPreferences
-        SharedPreferences sharedPref = getSharedPreferences("LedDivPrefs", Context.MODE_PRIVATE);
-        boolean toggleStatus = sharedPref.getBoolean("toggleStatus", false);
-        interrupteur.setChecked(toggleStatus);
+        // Charger le statut du bouton à bascule à partir des SharedPreferences
+        SharedPreferences preferencesPartagees = getSharedPreferences("preferences_application", Context.MODE_PRIVATE);
+        boolean etatInterrupteur = preferencesPartagees.getBoolean("etatBascule", false);
+        interrupteur.setChecked(etatInterrupteur);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Charger l'état à partir des SharedPreferences
+        SharedPreferences preferencesPartagees = getSharedPreferences("preferences_application", MODE_PRIVATE);
+        boolean etatInterrupteur = preferencesPartagees.getBoolean("etatBascule", false); // par défaut à false
+
+        interrupteur.setChecked(etatInterrupteur);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        saveSelectedColorAndBrightness(colorPickerView.getColor());
-        executorService.shutdown();
+        sauvegarderCouleurEtLuminositeSelectionnees(selecteurCouleur.getColor());
+        serviceExecutor.shutdown();
         try {
             if (client != null) {
                 client.disconnect();
@@ -199,29 +216,28 @@ public class LedDiv extends AppCompatActivity {
         } catch (MqttException e) {
             e.printStackTrace();
         }
-
     }
 
-    private void EnvoiMQTT(int R, int G, int B){
+    private void envoiMQTT(int R, int G, int B){
         try {
             //si le client est déconnecté ont le reconnecte
             if (!client.isConnected()) {
-                System.out.println("Reconnecting to broker: " + broker);
-                client.connect(connOpts);
-                System.out.println("Reconnected");
+                System.out.println("Reconnexion au broker: " + broker);
+                client.connect(optionsConnexion);
+                System.out.println("Reconnecté");
             }
 
-            //MaJ contenu du message
-            content = R + "/" + G + "/" + B + "/" + interrupteur.isChecked();
+            // MaJ contenu du message
+            contenu = R + "/" + G + "/" + B;
 
-            //Ajout du contenu du message
-            MqttMessage message = new MqttMessage(content.getBytes());
+            // Ajout du contenu du message
+            MqttMessage message = new MqttMessage(contenu.getBytes());
             message.setQos(qos);
-            client.publish(pubTopic, message);
-            System.out.println("Publishing message: " + message);
+            client.publish(sujetPublication, message);
+            System.out.println("Publication du message: " + message);
 
         } catch(MqttException me) {
-            System.out.println("reason " + me.getReasonCode());
+            System.out.println("raison " + me.getReasonCode());
             System.out.println("msg " + me.getMessage());
             System.out.println("loc " + me.getLocalizedMessage());
             System.out.println("cause " + me.getCause());
@@ -229,13 +245,44 @@ public class LedDiv extends AppCompatActivity {
             me.printStackTrace();
         }
     }
+
+    private void envoiMQTT(int ferme){
+        try {
+            //si le client est déconnecté ont le reconnecte
+            if (!client.isConnected()) {
+                System.out.println("Reconnexion au broker: " + broker);
+                client.connect(optionsConnexion);
+                System.out.println("Reconnecté");
+            }
+
+            // MaJ contenu du message
+            contenu = String.valueOf(ferme);
+
+            // Ajout du contenu du message
+            MqttMessage message = new MqttMessage(contenu.getBytes());
+            message.setQos(qos);
+            client.publish(getSujetPublicationFermeLumiere, message);
+            System.out.println("Publication du message: " + message);
+
+        } catch(MqttException me) {
+            System.out.println("raison " + me.getReasonCode());
+            System.out.println("msg " + me.getMessage());
+            System.out.println("loc " + me.getLocalizedMessage());
+            System.out.println("cause " + me.getCause());
+            System.out.println("excep " + me);
+            me.printStackTrace();
+        }
+    }
+
+    //flèche en haut à gauche pour retourner au menu principal
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
                 finish();
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
-        }
+    }
 }
