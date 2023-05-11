@@ -305,7 +305,7 @@ public class MainActivity extends AppCompatActivity {
     public static void CapteurUltrason(Date horodatage, int distance) {
         Calendar calendrier = GregorianCalendar.getInstance(); // crée une nouvelle instance de calendrier
         calendrier.setTime(horodatage);   // attribue le calendrier à la date donnée
-        TextViewDate.setText(String.format("%d-%d-%d", calendrier.get(Calendar.YEAR), calendrier.get(Calendar.MONTH), calendrier.get(Calendar.DAY_OF_MONTH)));
+        TextViewDate.setText(String.format("%d-%d-%d", calendrier.get(Calendar.YEAR), calendrier.get(Calendar.MONTH) + 1, calendrier.get(Calendar.DAY_OF_MONTH)));
         int heure = calendrier.get(Calendar.HOUR_OF_DAY);
         int minute = calendrier.get(Calendar.MINUTE);
         int seconde = calendrier.get(Calendar.SECOND);
