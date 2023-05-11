@@ -64,7 +64,6 @@ public class LedDiv extends AppCompatActivity {
     private void chargerCouleurEtLuminositeSelectionnees() {
         SharedPreferences preferencesPartagees = getSharedPreferences("LedDivPrefs", Context.MODE_PRIVATE);
         int couleur = preferencesPartagees.getInt("couleurSelectionnee", Color.BLACK);
-        int luminosite = preferencesPartagees.getInt("luminositeSelectionnee", 128);
         selecteurCouleur.setInitialColor(couleur);
     }
 
