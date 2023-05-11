@@ -309,18 +309,16 @@ public class MainActivity extends AppCompatActivity {
         int heure = calendrier.get(Calendar.HOUR_OF_DAY);
         int minute = calendrier.get(Calendar.MINUTE);
         int seconde = calendrier.get(Calendar.SECOND);
-        String heureTxt = String.valueOf(heure);
-        String minuteTxt = String.valueOf(minute);
-        String secondeTxt = String.valueOf(seconde);
         if (heure < 10) {
-            heureTxt = "0" + String.valueOf(heure);
+            TextViewHeure.setText(String.format("0%d:", heure));
         }
         if (minute < 10) {
-            minuteTxt = "0" + String.valueOf(minute);
+            TextViewHeure.setText(String.format("%d:0%d:", heure, minute));
         }
         if (seconde < 10) {
-            secondeTxt = "0" + String.valueOf(seconde);
+            TextViewHeure.setText(String.format("%d:%d:0%d", heure, minute, seconde));
         }
         TextViewHeure.setText(String.format("%d:%d:%d", heure, minute, seconde));
     }
+
 }
