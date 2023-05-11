@@ -9,21 +9,16 @@ import android.util.Log;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
 public class ServiceReception extends Service {
     private static final String TAG = "ServiceReception";
     public Handler mHandler = new Handler();
     boolean estDejaDemarre = false;
-
     String subTopic = "capteur_ultrason";
-    int qos = 2;
     String broker = "tcp://test.mosquitto.org:1883"; //Changer pour l'adresse du broker
     String clientId = "emqx_test";
     MemoryPersistence persistence = new MemoryPersistence();
-
-    int delaiReception = 5000; //Temps entre chaque réception MQTT en millisecondes
 
     @Override
     public void onCreate() {
@@ -31,6 +26,7 @@ public class ServiceReception extends Service {
         Log.d(TAG, "onCreate(): service créé");
     }
 
+    //démare le service pour le mode sécurité
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if(!estDejaDemarre)
@@ -49,11 +45,11 @@ public class ServiceReception extends Service {
    @Override
     public void onDestroy() {
         System.out.println("service arrêté");
-       // stopRepeatingTask();
         super.onDestroy();
     }
 
 
+    //permet de maintenir la souscription au topic
     Runnable repetitionExecution = new Runnable() {
         @Override
         public void run() {
@@ -62,31 +58,24 @@ public class ServiceReception extends Service {
         }
     };
 
+    //reçois les messages MQTT
     private void reception() {
         try {
             MqttClient client = new MqttClient(broker, clientId, persistence);
 
             MqttConnectOptions connOpts = new MqttConnectOptions();
-            //connOpts.setUserName("rw");
-            //connOpts.setPassword("readwrite".toCharArray());
             connOpts.setCleanSession(true);
 
             client.setCallback(new OnMessageCallback());
 
             // établir connexion
-            //System.out.println("Connecting to broker: " + broker);
             client.connect(connOpts);
-
-            //System.out.println("Connected");
 
             // Subscribe
             client.subscribe(subTopic);
 
-            //client.disconnect();
-            //System.out.println("Disconnected");
-            //client.close();
         } catch(MqttException me) {
-            System.out.println("reason " + me.getReasonCode());
+            System.out.println("raison " + me.getReasonCode());
             System.out.println("msg " + me.getMessage());
             System.out.println("loc " + me.getLocalizedMessage());
             System.out.println("cause " + me.getCause());
@@ -102,11 +91,7 @@ public class ServiceReception extends Service {
         repetitionExecution.run();
     }
 
-    void stopRepeatingTask() {
-        mHandler.removeCallbacks(repetitionExecution);
-    }
-
-    //Binding pas utilisé dans le projet
+    //Binding pas utilisé dans le projet mais nécessaire au projet
     public IBinder onBind(Intent intent) {
         return null;
     }

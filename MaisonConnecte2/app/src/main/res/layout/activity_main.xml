@@ -83,4 +83,39 @@
         android:textSize="8sp"
         android:textStyle="italic" />
 
+    <Button
+        android:id="@+id/boutonChoixOuvertureDialog"
+        android:layout_width="162dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="Ouverture"
+        android:textSize="12sp"
+        app:icon="@android:drawable/ic_lock_idle_alarm" />
+
+    <TextView
+        android:id="@+id/ouvertureLumiereTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:layout_marginBottom="20dp"
+        android:layout_weight="0"
+        android:text="Ouverture des lumières à :" />
+
+    <Button
+        android:id="@+id/boutonChoixFermetureDialog"
+        android:layout_width="165dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="0"
+        android:text="Fermeture"
+        android:textSize="12sp"
+        app:icon="@android:drawable/ic_lock_idle_alarm" />
+
+    <TextView
+        android:id="@+id/fermetureLumiereTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:layout_weight="0"
+        android:text="Fermeture des lumières à :" />
+
 </LinearLayout>

@@ -11,38 +11,39 @@ import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+// Cette classe gère la connexion au serveur via un socket et la réception d'images
 public class SocketClient implements Runnable {
 
-    private final String ipAddress;
+    private final String adresseIP;
     private final int port;
-    private final ImageReceivedListener imageReceivedListener;
-    private final ExecutorService executorService;
+    private final EcouteurImageRecue ecouteurImageRecue;
+    private final ExecutorService serviceExecutor;
 
     private Socket socket;
-    private InputStream inputStream;
+    private InputStream fluxEntree;
 
-    public SocketClient(String ipAddress, int port, ImageReceivedListener imageReceivedListener) {
-        this.ipAddress = ipAddress;
+    public SocketClient(String adresseIP, int port, EcouteurImageRecue ecouteurImageRecue) {
+        this.adresseIP = adresseIP;
         this.port = port;
-        this.imageReceivedListener = imageReceivedListener;
-        executorService = Executors.newSingleThreadExecutor();
+        this.ecouteurImageRecue = ecouteurImageRecue;
+        serviceExecutor = Executors.newSingleThreadExecutor();
     }
 
     @Override
     public void run() {
         try {
-            socket = new Socket(ipAddress, port);
-            inputStream = socket.getInputStream();
+            socket = new Socket(adresseIP, port);
+            fluxEntree = socket.getInputStream();
 
             while (true) {
-                byte[] imageBytes = readImage(inputStream);
-                if (imageBytes != null) {
-                    imageReceivedListener.onImageReceived(imageBytes);
+                byte[] octetsImage = lireImage(fluxEntree);
+                if (octetsImage != null) {
+                    ecouteurImageRecue.onImageReceived(octetsImage);
                 }
             }
 
         } catch (IOException e) {
-            Log.e("SocketClient", "Error connecting to server", e);
+            Log.e("ClientSocket", "Erreur de connexion au serveur", e);
         } finally {
             if (socket != null) {
                 try {
@@ -53,66 +54,71 @@ public class SocketClient implements Runnable {
             }
         }
     }
-    public void start() {
-        executorService.execute(() -> {
+    // Démarrer la connexion au serveur
+    public void demarrer() {
+        serviceExecutor.execute(() -> {
             try {
-                socket = new Socket(ipAddress, port);
-                inputStream = socket.getInputStream();
+                socket = new Socket(adresseIP, port);
+                fluxEntree = socket.getInputStream();
 
                 while (true) {
-                    byte[] imageBytes = readImage(inputStream);
-                    if (imageBytes != null) {
-                        imageReceivedListener.onImageReceived(imageBytes);
+                    byte[] octetsImage = lireImage(fluxEntree);
+                    if (octetsImage != null) {
+                        ecouteurImageRecue.onImageReceived(octetsImage);
                     }
                 }
 
             } catch (IOException e) {
-                Log.e("SocketClient", "Error connecting to server", e);
+                Log.e("ClientSocket", "Erreur de connexion au serveur", e);
             }
         });
     }
-    public void stop() {
+    // Arrêter la connexion au serveur
+    public void arreter() {
         try {
-            if (inputStream != null) {
-                inputStream.close();
+            if (fluxEntree != null) {
+                fluxEntree.close();
             }
             if (socket != null) {
                 socket.close();
             }
         } catch (IOException e) {
-            Log.e("SocketClient", "Error closing resources", e);
+            Log.e("ClientSocket", "Erreur à la fermeture des ressources", e);
         }
     }
-    private static final String FRAME_DELIMITER = "---END_OF_FRAME---";
-    private static final byte[] FRAME_DELIMITER_BYTES = FRAME_DELIMITER.getBytes(StandardCharsets.UTF_8);
+    private static final String DELIMITEUR_CADRE = "---END_OF_FRAME---";
+    private static final byte[] OCTETS_DELIMITEUR_CADRE = DELIMITEUR_CADRE.getBytes(StandardCharsets.UTF_8);
 
-    private byte[] readImage(InputStream inputStream) throws IOException {
+    // Lire l'image depuis le flux d'entrée
+    private byte[] lireImage(InputStream fluxEntree) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        byte[] buffer = new byte[1000000];
-        int bytesRead;
-        int delimiterIndex = 0;
+        byte[] tampon = new byte[1000000];
+        int octetsLus;
+        int indiceDelimiteur = 0;
 
-        while ((bytesRead = inputStream.read(buffer)) != -1) {
-            baos.write(buffer, 0, bytesRead);
+        while ((octetsLus = fluxEntree.read(tampon)) != -1) {
+            baos.write(tampon, 0, octetsLus);
 
-            // Check if the delimiter is found in the received data
-            for (int i = 0; i < bytesRead; i++) {
-                if (buffer[i] == FRAME_DELIMITER_BYTES[delimiterIndex]) {
-                    delimiterIndex++;
-                    if (delimiterIndex == FRAME_DELIMITER_BYTES.length) {
-                        byte[] imageBytes = Arrays.copyOfRange(baos.toByteArray(), 0, baos.size() - FRAME_DELIMITER_BYTES.length);
+            // Vérifie si le délimiteur est trouvé dans les données reçues
+            for (int i = 0; i < octetsLus; i++) {
+                if (tampon[i] == OCTETS_DELIMITEUR_CADRE[indiceDelimiteur]) {
+                    indiceDelimiteur++;
+                    if (indiceDelimiteur == OCTETS_DELIMITEUR_CADRE.length) {
+                        byte[] octetsImage = Arrays.copyOfRange(baos.toByteArray(), 0, baos.size() - OCTETS_DELIMITEUR_CADRE.length);
                         baos.reset();
-                        return imageBytes;
+                        return octetsImage;
                     }
                 } else {
-                    delimiterIndex = 0;
+                    indiceDelimiteur = 0;
                 }
             }
         }
 
         return null;
     }
-    public interface ImageReceivedListener {
-        void onImageReceived(byte[] imageBytes);
+
+    // Interface pour écouter lorsque une image est reçue
+    public interface EcouteurImageRecue {
+        void onImageReceived(byte[] octetsImage);
     }
 }

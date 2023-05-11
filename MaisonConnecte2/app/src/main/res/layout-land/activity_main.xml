@@ -1,93 +1,134 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:paddingBottom="16dp"
-    android:paddingTop="16dp"
-    android:paddingLeft="16dp"
-    android:paddingRight="16dp"
-    tools:context=".MainActivity">
-
-    <TextView
-        android:id="@+id/TitreMouvement"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight="0"
-        android:text="Dernière alerte de mouvement"
-        android:textAlignment="center"
-        android:textSize="16sp"
-        android:textStyle="bold" />
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="0"
-        android:orientation="horizontal">
+        android:orientation="vertical"
+        android:paddingBottom="16dp"
+        android:paddingTop="16dp"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        tools:context=".MainActivity">
 
         <TextView
-            android:id="@+id/DateLabel"
+            android:id="@+id/TitreMouvement"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Date : "
+            android:layout_weight="0"
+            android:text="Dernière alerte de mouvement"
+            android:textAlignment="center"
+            android:textSize="16sp"
             android:textStyle="bold" />
 
-        <TextView
-            android:id="@+id/DateContenu"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="----------"
-            android:textAlignment="textEnd" />
+            android:layout_weight="0"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/DateLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Date : "
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/DateContenu"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="----------"
+                android:textAlignment="textEnd" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="0"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/HeureLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Heure : "
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/HeureContenu"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="--:--"
+                android:textAlignment="textEnd" />
+        </LinearLayout>
+
+        <Switch
+            android:id="@+id/switchSecurite"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="0"
+            android:minHeight="48dp"
+            android:text="Mode Sécurité" />
+
+        <TextView
+            android:id="@+id/infoNotif"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="*Les notifications doivent être activées"
+            android:textSize="8sp"
+            android:textStyle="italic" />
+
+        <Button
+            android:id="@+id/button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="0"
+            android:text="Test notification" />
+
+        <Button
+            android:id="@+id/boutonChoixOuvertureDialog"
+            android:layout_width="162dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="Ouverture"
+            android:textSize="12sp"
+            app:icon="@android:drawable/ic_lock_idle_alarm" />
+
+        <TextView
+            android:id="@+id/ouvertureLumiereTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="20dp"
+            android:layout_weight="0"
+            android:text="Ouverture des lumières à :" />
+
+        <Button
+            android:id="@+id/boutonChoixFermetureDialog"
+            android:layout_width="165dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0"
+            android:text="Fermeture"
+            android:textSize="12sp"
+            app:icon="@android:drawable/ic_lock_idle_alarm" />
+
+        <TextView
+            android:id="@+id/fermetureLumiereTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:layout_weight="0"
+            android:text="Fermeture des lumières à :" />
+
     </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight="0"
-        android:orientation="horizontal">
-
-        <TextView
-            android:id="@+id/HeureLabel"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Heure : "
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/HeureContenu"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="--:--"
-            android:textAlignment="textEnd" />
-    </LinearLayout>
-
-    <Switch
-        android:id="@+id/switchSecurite"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight="0"
-        android:minHeight="48dp"
-        android:text="Mode Sécurité" />
-
-    <TextView
-        android:id="@+id/infoNotif"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="*Les notifications doivent être activées"
-        android:textSize="8sp"
-        android:textStyle="italic" />
-
-    <Button
-        android:id="@+id/button"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight="0"
-        android:text="Test notification" />
-
-</LinearLayout>
+</ScrollView>
