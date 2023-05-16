@@ -1,8 +1,10 @@
 package Info420.maisonconnecte;
 
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.IBinder;
 import android.util.Log;
 
@@ -13,86 +15,90 @@ import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
 public class ServiceReception extends Service {
     private static final String TAG = "ServiceReception";
-    public Handler mHandler = new Handler();
     boolean estDejaDemarre = false;
-    String subTopic = "capteur_ultrason";
-    String broker = "tcp://test.mosquitto.org:1883"; //Changer pour l'adresse du broker
-    String clientId = "emqx_test";
-    MemoryPersistence persistence = new MemoryPersistence();
+    String sousTopic = "capteur_ultrason";
+    String courtier = "tcp://test.mosquitto.org:1883"; //Changer pour l'adresse du broker
+    String identifiantClient = "emqx_test";
+    MemoryPersistence persistance = new MemoryPersistence();
+
+    MqttClient client;
+
+    private Handler gestionnaireVerifConnection;
+    private final HandlerThread filGestionnaire = new HandlerThread("filGestionnaireMqtt");
+    private static final long INTERVALLE_VERIF_CONNECTION = 10000; // 10 seconds
 
     @Override
     public void onCreate() {
         super.onCreate();
+        Intent notificationIntent = new Intent(this, MainActivity.class);
+        notificationIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE);
+
+        filGestionnaire.start();
+        gestionnaireVerifConnection = new Handler(filGestionnaire.getLooper());
         Log.d(TAG, "onCreate(): service créé");
     }
 
-    //démare le service pour le mode sécurité
+    // Démarre le service pour le mode sécurité
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if(!estDejaDemarre)
-        {
+        if (!estDejaDemarre) {
             Log.d(TAG, "onStartCommand(): service démarré");
             estDejaDemarre = true;
-            startRepeatingTask();
         }
-        else
-        {
-            Log.d(TAG, "onStartCommand(): service déjà démarré");
-        }
+        gestionnaireVerifConnection.post(verifConnectionRunnable);
         return Service.START_STICKY;
     }
 
-   @Override
-    public void onDestroy() {
-        System.out.println("service arrêté");
-        super.onDestroy();
-    }
-
-
-    //permet de maintenir la souscription au topic
-    Runnable repetitionExecution = new Runnable() {
+    private final Runnable verifConnectionRunnable = new Runnable() {
         @Override
         public void run() {
-            reception();
-            mHandler.postDelayed(this, 2000);
+            try {
+                if (client == null || !client.isConnected()) {
+                    client = new MqttClient(courtier, identifiantClient, persistance);
+
+                    MqttConnectOptions optionsConn = new MqttConnectOptions();
+                    optionsConn.setCleanSession(true);
+
+                    client.setCallback(new OnMessageCallback());
+
+                    // établir connexion
+                    client.connect(optionsConn);
+
+                    // Souscrire au topic une seule fois
+                    client.subscribe(sousTopic);
+                    Log.d(TAG, "Abonné avec succès au topic: " + sousTopic);
+                }
+            } catch (MqttException | ClassNotFoundException | IllegalAccessException |
+                     InstantiationException | NoSuchMethodException me) {
+                // Gérer les exceptions
+                Log.e(TAG, "Exception", me);
+            }
+
+            gestionnaireVerifConnection.postDelayed(this, INTERVALLE_VERIF_CONNECTION);
         }
     };
 
-    //reçois les messages MQTT
-    private void reception() {
-        try {
-            MqttClient client = new MqttClient(broker, clientId, persistence);
-
-            MqttConnectOptions connOpts = new MqttConnectOptions();
-            connOpts.setCleanSession(true);
-
-            client.setCallback(new OnMessageCallback());
-
-            // établir connexion
-            client.connect(connOpts);
-
-            // Subscribe
-            client.subscribe(subTopic);
-
-        } catch(MqttException me) {
-            System.out.println("raison " + me.getReasonCode());
-            System.out.println("msg " + me.getMessage());
-            System.out.println("loc " + me.getLocalizedMessage());
-            System.out.println("cause " + me.getCause());
-            System.out.println("excep " + me);
-            me.printStackTrace();
-        }catch (IllegalAccessException | ClassNotFoundException | InstantiationException |
-                NoSuchMethodException e) {
-            throw new RuntimeException(e);
+    @Override
+    public void onDestroy() {
+        System.out.println("service arrêté");
+        gestionnaireVerifConnection.removeCallbacks(verifConnectionRunnable);
+        filGestionnaire.quitSafely();  // Quitter de manière sécurisée le fil du gestionnaire
+        if (client != null) {
+            try {
+                client.disconnect();
+            } catch (MqttException e) {
+                e.printStackTrace();
+            }
         }
+        super.onDestroy();
     }
 
-    void startRepeatingTask() {
-        repetitionExecution.run();
-    }
-
-    //Binding pas utilisé dans le projet mais nécessaire au projet
+    // Liaison non utilisée dans le projet mais nécessaire au projet
     public IBinder onBind(Intent intent) {
         return null;
     }
 }
+/*
+this is the service. When I toggle on the service and I put the applicaiton in background I have a notification for movement. I click on it and it put my application back and put the toggle at off. But the service is still running because it is still updating the hours.
+ */

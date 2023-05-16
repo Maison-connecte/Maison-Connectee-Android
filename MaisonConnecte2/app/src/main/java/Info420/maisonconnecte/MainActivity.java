@@ -6,6 +6,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.TimePickerDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -129,6 +130,7 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 stopService(new Intent(getApplicationContext(), ServiceReception.class));
             }
+            sauvegardeEtatModeSecurite();
         });
 
         Intent intention = new Intent(getApplicationContext(), MainActivity.class);
@@ -179,6 +181,7 @@ public class MainActivity extends AppCompatActivity {
         chargerHeureDepuisPreferences("Ouverture", ouvertureLumiereTextView, "Ouverture");
         chargerHeureDepuisPreferences("Fermeture", fermetureLumiereTextView, "Fermeture");
         initialiserClientMqtt();
+        chargeEtatModeSecurite();
     }
 
     // pour remettre les valeurs sauvegardées dans les préférences
@@ -282,6 +285,20 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void sauvegardeEtatModeSecurite() {
+        SharedPreferences sharedPreferences = getSharedPreferences("preferences", MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putBoolean("toggle", interrupteurSecurite.isChecked());
+        editor.apply();
+    }
+
+    public void chargeEtatModeSecurite() {
+        SharedPreferences sharedPreferences = getSharedPreferences("preferences", MODE_PRIVATE);
+        boolean isChecked = sharedPreferences.getBoolean("toggle", false);
+
+        interrupteurSecurite.setChecked(isChecked);
+    }
+
     public boolean onCreateOptionsMenu(Menu menu) {
 
         MenuInflater inflater = getMenuInflater();
@@ -302,7 +319,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // Gère l'évènement lorsqu'un mouvement est détecté par le capteur à ultrasons
-    public static void CapteurUltrason(Date horodatage, int distance) {
+    public static void CapteurUltrason(Date horodatage) {
         Calendar calendrier = GregorianCalendar.getInstance(); // crée une nouvelle instance de calendrier
         calendrier.setTime(horodatage);   // attribue le calendrier à la date donnée
         TextViewDate.setText(String.format("%d-%d-%d", calendrier.get(Calendar.YEAR), calendrier.get(Calendar.MONTH) + 1, calendrier.get(Calendar.DAY_OF_MONTH)));
@@ -320,5 +337,4 @@ public class MainActivity extends AppCompatActivity {
         }
         TextViewHeure.setText(String.format("%d:%d:%d", heure, minute, seconde));
     }
-
 }

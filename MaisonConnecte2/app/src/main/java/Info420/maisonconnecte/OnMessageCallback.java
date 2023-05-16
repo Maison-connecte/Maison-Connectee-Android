@@ -26,11 +26,11 @@ public class OnMessageCallback implements MqttCallback {
 
     //quand un message est reçus ont affiche dans la console et ont met à jour les texte dans la mainActivity
     public void messageArrived(String topic, MqttMessage message) throws Exception {
-        System.out.println(topic + ": " + new String(message.getPayload()));
+        //System.out.println(topic + ": " + new String(message.getPayload()));
 
         tempsActuel = Calendar.getInstance().getTime();
         if (Objects.equals(topic, "capteur_ultrason") && new String(message.getPayload()).equals("1") ) {
-            MainActivity.CapteurUltrason(tempsActuel, Integer.parseInt(new String(message.getPayload())));
+            MainActivity.CapteurUltrason(tempsActuel);
         }
     }
 
