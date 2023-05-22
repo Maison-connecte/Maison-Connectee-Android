@@ -8,6 +8,16 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Objects;
 
+/*----------------------------------------------------------------
+ *  Auteur: Maxime Paulin, Nathael Blais, Dylan lévesque.
+ *
+ *  Date de création: 29 Mars 2023
+ *
+ *  Dernière date de modification: [2023-05-16]
+ *
+ *  Description: Gère la réception MQTT
+ *----------------------------------------------------------------*/
+
 //class utilisé pour le mode sécurité, reçois les messages à MQTT et met à jour les textes sur le MainAcitivity
 public class OnMessageCallback implements MqttCallback {
 
