@@ -6,7 +6,6 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.TimePickerDialog;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -39,6 +38,25 @@ import java.io.UnsupportedEncodingException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+/*----------------------------------------------------------------
+ *  Auteur: Maxime Paulin, Nathael Blais, Dylan lévesque.
+ *
+ *  Date de création: 22 Mars 2023
+ *
+ *  Dernière date de modification: [2023-05-22]
+ *
+ *  Description: Gère l'activité principale Android, gère le menu de navigation entre les activités secondaires.
+ *
+ *  Permet de voir la dernière alerte de mouvement et d'activé le mode de sécurité (service)
+ *  Permet aussi de changer l'heure d'ouverture/fermeture de la bande lumineuse.
+ *----------------------------------------------------------------*/
+
+/*----------------------------------------------------------------
+ * Sources:
+ *  - Permet de faire la roue de dialogue pour choissir l'heure: https://abhiandroid.com/ui/timepicker
+ *
+ *----------------------------------------------------------------*/
+
 
 public class MainActivity extends AppCompatActivity {
     private Switch interrupteurSecurite; // switchSecurite

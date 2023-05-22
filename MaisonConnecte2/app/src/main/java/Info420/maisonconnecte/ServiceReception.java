@@ -99,6 +99,3 @@ public class ServiceReception extends Service {
         return null;
     }
 }
-/*
-this is the service. When I toggle on the service and I put the applicaiton in background I have a notification for movement. I click on it and it put my application back and put the toggle at off. But the service is still running because it is still updating the hours.
- */

@@ -12,6 +12,22 @@ import android.view.MenuItem;
 import android.view.TextureView;
 import android.view.ViewGroup;
 
+/*----------------------------------------------------------------
+ *  Auteur: Maxime Paulin.
+ *
+ *  Date de création: 6 avril 2023
+ *
+ *  Dernière date de modification: [2023-04-06]
+ *
+ *  Description: Permet de traiter les images pour les faires afficher dans une texture view
+ *----------------------------------------------------------------*/
+
+/*----------------------------------------------------------------
+ * Sources:
+ *  - chat GPT v4 : onImageReceived(byte[] octetsImage)
+ *  - aspect ratio : https://stackoverflow.com/questions/27418191/playing-video-on-texture-view-with-aspect-ratio-of-video
+ *----------------------------------------------------------------*/
+
 // Cette classe gère la caméra dans l'application
 public class Cam extends AppCompatActivity implements TextureView.SurfaceTextureListener, SocketClient.EcouteurImageRecue {
     private TextureView vueTexture; // Vue de la texture

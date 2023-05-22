@@ -11,6 +11,25 @@ import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+/*----------------------------------------------------------------
+ *  Auteur: Maxime Paulin.
+ *
+ *  Date de création: 6 avril 2023
+ *
+ *  Dernière date de modification: [2023-04-06]
+ *
+ *  Description: Permet de connecté le client au serveur où la caméra est branché pour recevoir le flux vidéo
+ *----------------------------------------------------------------*/
+
+/*----------------------------------------------------------------
+ * Sources:
+ *  - doc android : https://developer.android.com/reference/java/net/Socket
+ *  - information supplémentaire : https://stackoverflow.com/questions/7384678/how-to-create-socket-connection-in-android
+ *  - information supplémentaire : https://perihanmirkelam.medium.com/socket-programming-on-android-tcp-server-example-e4552a957c08
+ *  - information supplémentaire : https://www.tutorialspoint.com/sending-and-receiving-data-with-sockets-in-android
+ *  - Chat GPT v4
+ *----------------------------------------------------------------*/
+
 // Cette classe gère la connexion au serveur via un socket et la réception d'images
 public class SocketClient implements Runnable {
 
