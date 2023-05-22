@@ -25,6 +25,16 @@ import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+/*----------------------------------------------------------------
+ *  Auteur: Maxime Paulin, Nathael Blais, Dylan lévesque.
+ *
+ *  Date de création: 22 Mars 2023
+ *
+ *  Dernière date de modification: [2023-05-16]
+ *
+ *  Description: Gère l'activité de la bande DEL divertissement
+ *----------------------------------------------------------------*/
+
 // Classe principale pour contrôler les lumières LED
 public class LedDiv extends AppCompatActivity {
 
