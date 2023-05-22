@@ -8,6 +8,16 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.util.Log;
 
+/*----------------------------------------------------------------
+ *  Auteur: Maxime Paulin
+ *
+ *  Date de création: 10 Mai 2023
+ *
+ *  Dernière date de modification: [2023-05-10]
+ *
+ *  Description: Gère les préférences pour le mode sécurité
+ *----------------------------------------------------------------*/
+
 public class AlarmReceiver extends BroadcastReceiver {
 
     @Override
